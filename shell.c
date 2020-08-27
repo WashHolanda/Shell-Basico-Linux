@@ -17,16 +17,13 @@ Aluno: Washington Holanda de Oliveira
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#define TRUE 1
-#define FALSE 0
 #define TAM_LINHA 30 // tamanho máximo dos comandos
 
 int main(){
     char **comando, in[100], *token;
     int cmd_div[30]; // vetor com a posição de cada pipe
-    int tam = 0; // quantidade de linhas da matriz
     int i,j; // contador
-    int flag_exit = FALSE; // flag de controle
+    int tam; // tamanho da matriz de comandos
     pid_t child; // processo filho
 
     scanf("%[^\n]s",in); // scanf() guarda a linha toda na string in
@@ -49,7 +46,7 @@ int main(){
         }
         i++;
         tam++;
-        token = strtok(NULL," ");
+        token = strtok(NULL," "); // pega o próximo token da string 'in'
     }
 
     // alocação do descritor de arquivos
@@ -59,11 +56,32 @@ int main(){
     }
 
     for(i=0;i<j;i++){ // j guarda a quantiade de forks necessários
-        printf("Contador: %d\n",i);
         child = fork();
-        if(child == 0){
+        if(child == 0){ // processo filho 
             int FILE_out, FILE_in; // arquivos para redirecionamento de entrada ou saida
-            int indice = cmd_div[i];
+            int indice = cmd_div[i]; // indice do comando
+            int point = indice; // aponta para o elemento do comando analisado
+
+            while(comando[point] != NULL){
+                if(strcmp(comando[point],">")==0){ // redirecionamento de saída
+                    FILE_out = open(comando[point+1], O_CREAT | O_RDWR | O_TRUNC, 0644);
+                    close(STDOUT_FILENO);
+                    dup2(FILE_out,STDOUT_FILENO);
+                    comando[point] = NULL; // indicação para execvp() parar a leitura
+
+                }else if(strcmp(comando[point],">>")==0){ // apêncide de saída
+                    FILE_out = open(comando[point+1], O_CREAT | O_RDWR | O_APPEND, 0644);
+                    dup2(FILE_out,STDOUT_FILENO);
+                    comando[point] = NULL; // indicação para execvp() parar a leitura
+
+                }else if(strcmp(comando[point],"<")==0){ // redirecionamento de entrada{
+                    FILE_in = open(comando[point+1], O_RDONLY, 0644);
+                    dup2(FILE_in,STDIN_FILENO);
+                    comando[point] = NULL; // indicação para execvp() parar a leitura
+                }
+                point++;
+            }
+
             if(i != 0){ // caso nao seja o primeiro processo
                 close(fd[i-1][1]); // fecha o descritor de escrita
                 dup2(fd[i-1][0], STDIN_FILENO); // muda o descritor de leitura para stdin
@@ -74,17 +92,16 @@ int main(){
 				dup2(fd[i][1], STDOUT_FILENO); // muda o descritor de escrita para stdout
 				close(fd[i][1]); // fecha o descritor de escrita
             }
-            printf("Comando: %s\n",comando[indice]);
             execvp(comando[indice],&comando[indice]);
 			close(fd[i-1][0]);
 
-        }else{
-            if(i>0){
-				close(fd[i-1][0]);
-				close(fd[i-1][1]);
-			}
+        }else if(child>0){ // processo pai
+			close(fd[i-1][0]);
+			close(fd[i-1][1]);
 			waitpid(-1, NULL, 0); // pai aguarda os filhos finalizarem
-		}
+		}else{
+            printf('Erro ao criar processos filhos!!\n');
+        }
     }
     return 0;
 }
