@@ -1,11 +1,12 @@
 /*
+TRABALHO 1: Implementação de um Shell
+-------------------------------------
 Aluno: André Luis Gonçalves Bien
     RA: 111829 Turma: Integral
 Aluno: Andrew Medeiros de Campos
     RA: 111775 Turma: Noturno
 Aluno: Washington Holanda de Oliveira
     RA: 112268 Turma: Noturno
-TRABALHO 1: Implementação de um Shell
 */
 
 #include <stdio.h>
@@ -22,6 +23,7 @@ TRABALHO 1: Implementação de um Shell
 
 int main(){
     char **comando, in[100], *token;
+    char **fd; // descritor de arquivos
     int cmd_div[30]; // vetor com a posição de cada pipe
     int tam = 0; // quantidade de linhas da matriz
     int i,j; // contador
@@ -39,6 +41,7 @@ int main(){
         j = 0;
         while(token != NULL){
             comando[i] = (char*) calloc(strlen(token)*sizeof(char**), 1);
+            // parser para encontar os pipes
             if(strcmp(token,"|") == 0){
                 cmd_div[j] = i;
                 strcpy(comando[i],NULL);
@@ -51,21 +54,15 @@ int main(){
             tam++;
             token = strtok(NULL," ");
         }
-        // parser para encontar os pipes
         j=0;
-        for(i=0;i<tam;i++){
-        }
-        //TESTE ------------
-        printf("IMPRIME\n");
-        for(i=0;i<tam;i++){
-            printf("%s\n",comando[i]);
-        }
+
+        // alocação do descritor de arquivos
 
         // processa os comandos
         pid = fork(); // cria processo filho
         if(pid == 0){ // confere se o processo é filho
-            
+                        
         }
-        return 0;
     }
+    return 0;
 }
