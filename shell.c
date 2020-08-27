@@ -57,8 +57,6 @@ int main(){
     fd = malloc(j*sizeof(int*));
     for(i=0;i<j;i++){
         fd[i] = malloc(2*sizeof(int));
-    }
-    for(i=0;i<j;i++){
         pipe(fd[i]); // cria um pipe para cada descritor de arquivos
     }
 
