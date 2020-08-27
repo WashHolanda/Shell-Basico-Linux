@@ -23,7 +23,6 @@ Aluno: Washington Holanda de Oliveira
 
 int main(){
     char **comando, in[100], *token;
-    int **fd; // descritor de arquivos
     int cmd_div[30]; // vetor com a posição de cada pipe
     int tam = 0; // quantidade de linhas da matriz
     int i,j; // contador
@@ -54,34 +53,38 @@ int main(){
     }
 
     // alocação do descritor de arquivos
-    fd = malloc(j*sizeof(int*));
+    int fd[j][2]; // descritor de arquivos
     for(i=0;i<j;i++){
-        fd[i] = malloc(2*sizeof(int));
         pipe(fd[i]); // cria um pipe para cada descritor de arquivos
     }
 
     for(i=0;i<j;i++){ // j guarda a quantiade de forks necessários
+        printf("Contador: %d\n",i);
         child = fork();
         if(child == 0){
             int FILE_out, FILE_in; // arquivos para redirecionamento de entrada ou saida
             int indice = cmd_div[i];
-            if(i != 0){
+            if(i != 0){ // caso nao seja o primeiro processo
                 close(fd[i-1][1]); // fecha o descritor de escrita
                 dup2(fd[i-1][0], STDIN_FILENO); // muda o descritor de leitura para stdin
 				close(fd[i-1][0]); // fecha o descritor de leitura
             }
-            if(i != j){
+            if(i != j-1){ // caso não seja o ultimo processo
                 close(fd[i][0]); // fecha o descritor de leitura
 				dup2(fd[i][1], STDOUT_FILENO); // muda o descritor de escrita para stdout
 				close(fd[i][1]); // fecha o descritor de escrita
             }
             printf("Comando: %s\n",comando[indice]);
             execvp(comando[indice],&comando[indice]);
+			close(fd[i-1][0]);
 
         }else{
-            int status;
-            waitpid(-1,&status,0); // pai espera ate o fim da execussão dos filhos
-        }
+            if(i>0){
+				close(fd[i-1][0]);
+				close(fd[i-1][1]);
+			}
+			waitpid(-1, NULL, 0); // pai aguarda os filhos finalizarem
+		}
     }
     return 0;
 }
